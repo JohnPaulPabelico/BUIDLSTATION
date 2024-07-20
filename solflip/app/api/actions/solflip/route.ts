@@ -4,8 +4,10 @@ import {
   ActionPostResponse,
   ACTIONS_CORS_HEADERS,
 } from "@solana/actions";
+import { transferSolTransaction } from "./transaction";
 
 export async function GET(request: Request) {
+
   const payload: ActionGetResponse = {
     icon: "https://i.imgur.com/7MyHf55.png",
     description: "Choose a side",
@@ -14,12 +16,14 @@ export async function GET(request: Request) {
     links: {
       actions: [
         {
-          label: "Heads",
-          href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        },
-        {
-          label: "Tails",
-          href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          label: "Flip",
+          href: `${baseHref}&amount={amount}`,
+          parameters: [
+            {
+              name: "amount", // parameter name in the `href` above
+              label: "Enter the amount of SOL to gamble", // placeholder of the text input
+            },
+          ],
         },
       ],
     },
@@ -36,6 +40,11 @@ export async function POST(request: Request) {
   const postRequest: ActionPostRequest = await request.json();
   const userPubKey = postRequest.account;
   console.log(userPubKey);
+
+  const transaction = await transferSolTransaction({
+    toAddress: userPubKey,
+    amount: 1,
+  });
 
   const payload: ActionPostResponse = {
     transaction: "",

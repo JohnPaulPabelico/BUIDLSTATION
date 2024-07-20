@@ -27,32 +27,28 @@ export const GET = async (req: Request) => {
     const { toPubkey } = validatedQueryParams(requestUrl);
 
     const baseHref = new URL(
-      `/api/actions/transfer-sol?to=${toPubkey.toBase58()}`,
+      `/api/actions/transfer?to=${toPubkey.toBase58()}`,
       requestUrl.origin
     ).toString();
 
     const payload: ActionGetResponse = {
-      title: "Quiz",
-      icon: new URL(
-        "https://i.imgur.com/ktvwG7F.png",
-        requestUrl.origin
-      ).toString(),
-      description:
-        "What is the answer to the ultimate question of Life, the Universe, and Everything?",
-      label: "Transfer", // this value will be ignored since `links.actions` exists
+      icon: "https://i.imgur.com/7MyHf55.png",
+      description: "Choose a side",
+      title: "SOLFLIP",
+      label: "Pick your side", // this value will be ignored since `links.actions` exists
       links: {
         actions: [
           {
-            label: "Answer A", // button text
-            href: ``,
-          },
-          {
-            label: "Answer B", // button text
-            href: `${baseHref}&amount=${"5"}`,
-          },
-          {
-            label: "Answer C", // button text
-            href: ``,
+            label: "Flip",
+            // button text
+            href: `${baseHref}&amount={amount}`, // this href will have a text input
+            parameters: [
+              {
+                name: "amount", // parameter name in the `href` above
+                label: "Enter the amount of SOL to gamble", // placeholder of the text input
+                required: true,
+              },
+            ],
           },
         ],
       },
@@ -128,8 +124,6 @@ export const POST = async (req: Request) => {
         transaction,
         message: `Send ${amount} SOL to ${toPubkey.toBase58()}`,
       },
-      // note: no additional signers are needed
-      // signers: [],
     });
 
     return Response.json(payload, {
