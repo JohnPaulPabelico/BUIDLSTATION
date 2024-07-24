@@ -5,13 +5,14 @@ import {
   ActionPostResponse,
   createPostResponse,
 } from "@solana/actions";
-import { transferSolTransaction } from "./transaction";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   generateSigner,
   transactionBuilder,
   some,
   publicKey,
+  createNoopSigner,
+  signerIdentity,
 } from "@metaplex-foundation/umi";
 import {
   fetchCandyMachine,
@@ -21,10 +22,9 @@ import {
 } from "@metaplex-foundation/mpl-candy-machine";
 import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { setComputeUnitLimit } from "@metaplex-foundation/mpl-toolbox";
-import { clusterApiUrl } from "@solana/web3.js";
+import { clusterApiUrl, Connection } from "@solana/web3.js";
 import { toWeb3JsLegacyTransaction } from "@metaplex-foundation/umi-web3js-adapters";
 import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
-// import { useWallet } from "@solana/wallet-adapter-react";
 
 const ENDPOINT = process.env.NEXT_PUBLIC_RPC || clusterApiUrl("devnet");
 const candyMachineAddress = publicKey(
@@ -50,11 +50,12 @@ export const OPTIONS = GET;
 export const POST = async (req: Request) => {
   const body: ActionPostRequest = await req.json();
 
-  // const wallet = useWallet();
+  const myPublicKey = publicKey(body.account);
+  const mySigner = createNoopSigner(myPublicKey);
 
   const umiTransaction = async () => {
     const umi = createUmi(ENDPOINT)
-      // .use(walletAdapterIdentity(wallet))
+      .use(signerIdentity(mySigner))
       .use(mplCandyMachine())
       .use(mplTokenMetadata());
 
@@ -63,9 +64,12 @@ export const POST = async (req: Request) => {
       umi,
       candyMachine.mintAuthority
     );
-
+    const connection = new Connection(ENDPOINT);
+    const { blockhash, lastValidBlockHeight } =
+      await connection.getLatestBlockhash();
     try {
       const nftMint = generateSigner(umi);
+
       const transaction = await transactionBuilder()
         .add(setComputeUnitLimit(umi, { units: 800_000 }))
         .add(
@@ -80,6 +84,7 @@ export const POST = async (req: Request) => {
             },
           })
         )
+        .setBlockhash(blockhash)
         .build(umi);
 
       return transaction;
