@@ -87,16 +87,11 @@ export const POST = async (req: Request) => {
         .build(umi);
 
       const web3JsTransaction = toWeb3JsLegacyTransaction(tx);
-      // const mySigner = Keypair.generate();
+
       web3JsTransaction.partialSign({
         publicKey: new PublicKey(nftMint.publicKey.toString()),
         secretKey: nftMint.secretKey,
       });
-
-      // interface Signer {
-      //   publicKey: PublicKey;
-      //   secretKey: Uint8Array;
-      // }
 
       return web3JsTransaction;
     } catch (error) {
