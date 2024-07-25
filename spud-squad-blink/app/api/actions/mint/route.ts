@@ -22,9 +22,8 @@ import {
 } from "@metaplex-foundation/mpl-candy-machine";
 import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { setComputeUnitLimit } from "@metaplex-foundation/mpl-toolbox";
-import { clusterApiUrl, Connection, Keypair } from "@solana/web3.js";
+import { clusterApiUrl, Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { toWeb3JsLegacyTransaction } from "@metaplex-foundation/umi-web3js-adapters";
-import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
 
 const ENDPOINT = process.env.NEXT_PUBLIC_RPC || clusterApiUrl("devnet");
 const candyMachineAddress = publicKey(
@@ -37,7 +36,7 @@ export const GET = async (req: Request) => {
     title: "Mint a Spud Mate",
     icon: "https://spudsquad.vercel.app/Gallery%20Images/6.svg",
     description: "Join the Spud Squad now!",
-    label: "Mint",
+    label: "Mint Spud Mate 0.05 SOL",
   };
 
   return Response.json(payload, {
@@ -89,7 +88,15 @@ export const POST = async (req: Request) => {
 
       const web3JsTransaction = toWeb3JsLegacyTransaction(tx);
       // const mySigner = Keypair.generate();
-      // web3JsTransaction.partialSign(mySigner);
+      web3JsTransaction.partialSign({
+        publicKey: new PublicKey(nftMint.publicKey.toString()),
+        secretKey: nftMint.secretKey,
+      });
+
+      // interface Signer {
+      //   publicKey: PublicKey;
+      //   secretKey: Uint8Array;
+      // }
 
       return web3JsTransaction;
     } catch (error) {
