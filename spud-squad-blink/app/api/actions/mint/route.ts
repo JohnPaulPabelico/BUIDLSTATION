@@ -22,7 +22,7 @@ import {
 } from "@metaplex-foundation/mpl-candy-machine";
 import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { setComputeUnitLimit } from "@metaplex-foundation/mpl-toolbox";
-import { clusterApiUrl, Connection } from "@solana/web3.js";
+import { clusterApiUrl, Connection, Keypair } from "@solana/web3.js";
 import { toWeb3JsLegacyTransaction } from "@metaplex-foundation/umi-web3js-adapters";
 import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
 
@@ -70,7 +70,7 @@ export const POST = async (req: Request) => {
     try {
       const nftMint = generateSigner(umi);
 
-      const transaction = await transactionBuilder()
+      const tx = await transactionBuilder()
         .add(setComputeUnitLimit(umi, { units: 800_000 }))
         .add(
           mintV2(umi, {
@@ -87,15 +87,18 @@ export const POST = async (req: Request) => {
         .setBlockhash(blockhash)
         .build(umi);
 
-      return transaction;
+      const web3JsTransaction = toWeb3JsLegacyTransaction(tx);
+      // const mySigner = Keypair.generate();
+      // web3JsTransaction.partialSign(mySigner);
+
+      return web3JsTransaction;
     } catch (error) {
       console.error("Error creating transaction:", error);
       throw error;
     }
   };
 
-  const myUmiTransaction = await umiTransaction();
-  const transaction = toWeb3JsLegacyTransaction(myUmiTransaction);
+  const transaction = await umiTransaction();
 
   const payload: ActionPostResponse = await createPostResponse({
     fields: {
